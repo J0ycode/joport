@@ -194,35 +194,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Scroll Animations (Intersection Observer)
+    // Old observer removed in favor of new one below
+
+    // Scroll Progress Bar
+    const progressBar = document.createElement('div');
+    progressBar.classList.add('scroll-progress');
+    document.body.appendChild(progressBar);
+
+    // Parallax & Scroll Progress
+    window.addEventListener('scroll', () => {
+        // Progress Bar
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.width = `${scrolled}%`;
+
+        // Parallax Background Effect
+        const scrolledPy = window.scrollY;
+        // Move background slower than scroll
+        document.body.style.backgroundPositionY = `${scrolledPy * 0.5}px`;
+
+        // Move particles slightly differently for depth
+        const canvas = document.querySelector('#particle-canvas');
+        if (canvas) {
+            canvas.style.transform = `translateY(${scrolledPy * 0.2}px)`;
+        }
+    });
+
+    // Advanced Scroll Reveal (Slide Up)
     const observerOptions = {
-        threshold: 0.1
+        threshold: 0.15,
+        rootMargin: "0px 0px -50px 0px" // Trigger slightly before element is fully visible
     };
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-                observer.unobserve(entry.target);
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target); // Only animate once
             }
         });
     }, observerOptions);
 
-    // Add animation classes to elements
-    const elementsToAnimate = document.querySelectorAll('.glass-card, .section-title, .hero-content');
+    // General Slide Up Elements (Excluding Skills and Projects)
+    const elementsToAnimate = document.querySelectorAll('.glass-card:not(.skill-card):not(.project-card), .section-title, .hero-content, .hero-btns, .contact-container');
     elementsToAnimate.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(20px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        el.classList.add('reveal-up');
         observer.observe(el);
     });
 
-    // CSS class for animation (added dynamically)
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .animate-in {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-    `;
-    document.head.appendChild(style);
+    // Staggered Fall Down for Skills
+    const skillCards = document.querySelectorAll('.skill-card');
+    skillCards.forEach((el, index) => {
+        el.classList.add('reveal-down');
+        el.style.transitionDelay = `${index * 100}ms`; // Stagger effect
+        observer.observe(el);
+    });
+
+    // Staggered Fall Down for Projects
+    const projectCards = document.querySelectorAll('.project-card');
+    projectCards.forEach((el, index) => {
+        el.classList.add('reveal-down');
+        el.style.transitionDelay = `${index * 150}ms`; // Slightly slower stagger for larger cards
+        observer.observe(el);
+    });
 });
